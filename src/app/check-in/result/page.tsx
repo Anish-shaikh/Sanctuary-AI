@@ -13,7 +13,29 @@ export default async function ResultPage({ searchParams }: { searchParams: Promi
     redirect('/check-in');
   }
 
-  const checkIn = await getCheckIn(params.id);
+  let checkIn;
+  
+  if (params.id === 'mock') {
+    // Fallback for Vercel demo when DB is read-only
+    checkIn = {
+      id: "mock",
+      patientId: "p1",
+      date: new Date().toISOString(),
+      text: "Mock check-in",
+      mood: "Neutral",
+      sentiment: "Negative",
+      distressScore: 85,
+      stressLevel: "high" as const,
+      linguisticDriftScore: 70,
+      riskLevel: "high" as const,
+      explanation: ["High distress detected. The user expresses significant anxiety and feelings of unsafety, likely linked to the recent encounter mentioned."],
+      signals: ["Threat Detected", "Anxiety", "Fear"],
+      confidence: 0.9
+    };
+  } else {
+    checkIn = await getCheckIn(params.id);
+  }
+
   if (!checkIn) {
     redirect('/check-in');
   }
