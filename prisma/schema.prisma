@@ -1,0 +1,75 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// SQLite does not support enums, using String instead.
+
+model User {
+  id        String   @id @default(uuid())
+  role      String   @default("VICTIM")
+  name      String
+  
+  // Victim specific fields (The "Case")
+  baselineDistress Int?
+  missedCheckIns   Int      @default(0)
+  currentRisk      String?
+  alertStatus      String?
+  lastCheckInDate  String?
+  
+  // Relationships
+  assignedToId     String?
+  assignedTo       User?    @relation("CounsellorAssignments", fields: [assignedToId], references: [id])
+  cases            User[]   @relation("CounsellorAssignments")
+  
+  checkIns         CheckIn[]
+  alerts           Alert[]
+  notes            CounsellorNote[]
+}
+
+model CheckIn {
+  id             String          @id @default(uuid())
+  patientId      String
+  patient        User            @relation(fields: [patientId], references: [id])
+  date           String          // Format yyyy-MM-dd to match UI
+  text           String
+  mood           String
+  
+  riskAssessment RiskAssessment?
+}
+
+model RiskAssessment {
+  id                   String    @id @default(uuid())
+  checkInId            String    @unique
+  checkIn              CheckIn   @relation(fields: [checkInId], references: [id])
+  
+  sentiment            String
+  distressScore        Int
+  stressLevel          String
+  linguisticDriftScore Int
+  riskLevel            String
+  explanation          String
+  signals              String
+  confidence           Float
+}
+
+model Alert {
+  id             String    @id @default(uuid())
+  patientId      String
+  patient        User      @relation(fields: [patientId], references: [id])
+  type           String    // e.g., "REVIEW_REQUIRED"
+  status         String    // e.g., "ACTIVE", "ACKNOWLEDGED", "RESOLVED"
+  createdAt      DateTime  @default(now())
+}
+
+model CounsellorNote {
+  id             String    @id @default(uuid())
+  patientId      String
+  patient        User      @relation(fields: [patientId], references: [id])
+  text           String
+  createdAt      DateTime  @default(now())
+}
